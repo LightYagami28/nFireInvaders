@@ -1,17 +1,61 @@
 import turtle
 import random
 import time
+import pygame
 
+# Initialize pygame for music management
+pygame.init()
+
+# Define constants for audio file names
+TITLE_SCREEN_MUSIC = "mp3/TitleScreen.mp3"
+GAME_OVER_MUSIC = "mp3/GameOver.mp3"
+BATTLE_MUSIC = "mp3/InvaderHomeworld.mp3"
+WIN_MUSIC = "mp3/LevelClear.mp3"
+
+# Function to play the introduction music
+def play_intro_music():
+    pygame.mixer.music.load(TITLE_SCREEN_MUSIC)
+    pygame.mixer.music.play(-1)  # Play in a loop
+
+# Function to stop the introduction music
+def stop_intro_music():
+    pygame.mixer.music.stop()
+
+# Function to play the game over sound
+def play_game_over_sound():
+    pygame.mixer.music.load(GAME_OVER_MUSIC)
+    pygame.mixer.music.play()
+
+# Function to stop the battle music
+def stop_battle_music():
+    pygame.mixer.music.stop()
+
+# Function to play the battle music
+def play_battle_music():
+    pygame.mixer.music.load(BATTLE_MUSIC)
+    pygame.mixer.music.play(-1)  # Play in a loop
+
+# Function to play the win music
+def play_win_music():
+    pygame.mixer.music.load(WIN_MUSIC)
+    pygame.mixer.music.play(-1)  # Play in a loop
+
+# Initialize the Turtle screen
 win = turtle.Screen()
 win.title("nFire Invaders")
 win.bgcolor("black")
 win.setup(width=600, height=600)
 win.tracer(0)
 
-punteggio = 0
+# Global variables
+score = 0
 powerups = []
 
-def genera_powerup():
+# Initialize the introduction music
+play_intro_music()
+
+# Function to generate a power-up
+def generate_powerup():
     powerup = turtle.Turtle()
     powerup.shape("square")
     powerup.color("blue")
@@ -22,30 +66,30 @@ def genera_powerup():
     powerup.goto(x, y)
     return powerup
 
-def muovi_powerup(powerup):
+def move_powerup(powerup):
     y = powerup.ycor()
     y -= invader_speed + 10
     powerup.sety(y)
 
-def muovi_aliena(aliena):
-    x = aliena.xcor()
-    x += aliena.direction * 5
-    aliena.setx(x)
+def move_alien(alien):
+    x = alien.xcor()
+    x += alien.direction * 5
+    alien.setx(x)
 
-    # Cambia la direzione e abbassa la navicella quando tocca i bordi
+    # Change direction and lower the alien ship when it hits the edges
     if x > 290 or x < -290:
-        aliena.direction *= -1
-        y = aliena.ycor()
+        alien.direction *= -1
+        y = alien.ycor()
         y -= 40
-        aliena.sety(y)
+        alien.sety(y)
 
-def aggiorna_punteggio():
+def update_score():
     score_display.clear()
-    score_display.write("PUNTEGGIO : {}".format(punteggio), align="left", font=("Courier", 12, "normal"))
+    score_display.write("SCORE: {}".format(score), align="left", font=("Courier", 12, "normal"))
 
-def aggiorna_barra_vita(barra_vita, vita):
-    barra_vita.clear()
-    barra_vita.write("VITA : {}".format(vita), align="right", font=("Courier", 12, "normal"))
+def update_health_bar(health_bar, health):
+    health_bar.clear()
+    health_bar.write("HEALTH: {}".format(health), align="right", font=("Courier", 12, "normal"))
 
 score_display = turtle.Turtle()
 score_display.speed(0)
@@ -53,20 +97,20 @@ score_display.color("white")
 score_display.penup()
 score_display.hideturtle()
 score_display.goto(-290, 260)
-aggiorna_punteggio()
+update_score()
 
-# Barra della vita della navicella aliena
-barra_vita = turtle.Turtle()
-barra_vita.speed(0)
-barra_vita.color("white")
-barra_vita.penup()
-barra_vita.hideturtle()
-barra_vita.goto(280, 260)
-vita_aliena = 100
-aggiorna_barra_vita(barra_vita, vita_aliena)
+# Health bar for the alien ship
+health_bar = turtle.Turtle()
+health_bar.speed(0)
+health_bar.color("white")
+health_bar.penup()
+health_bar.hideturtle()
+health_bar.goto(280, 260)
+alien_health = 100
+update_health_bar(health_bar, alien_health)
 
 player = turtle.Turtle()
-player.shape("turtle")
+player.shape("triangle")
 player.color("white")
 player.penup()
 player.speed(0)
@@ -118,13 +162,15 @@ for _ in range(num_invaders):
     invader.goto(x, y)
     invaders.append(invader)
 
-aliena = turtle.Turtle()
-aliena.shape("square")
-aliena.color("green")
-aliena.penup()
-aliena.speed(0)
-aliena.goto(0, 200)
-aliena.direction = 1
+stop_intro_music()  # Stop the introduction music before starting the battle
+
+alien = turtle.Turtle()
+alien.shape("square")
+alien.color("green")
+alien.penup()
+alien.speed(0)
+alien.goto(0, 200)
+alien.direction = 1
 
 invader_speed = 2
 bullet = turtle.Turtle()
@@ -132,7 +178,7 @@ bullet.shape("square")
 bullet.color("yellow")
 bullet.penup()
 bullet.speed(10)
-bullet.shapesize(stretch_wid=0.5, stretch_len=0.5)  # Rendi il proiettile della navicella aliena più sottile
+bullet.shapesize(stretch_wid=0.5, stretch_len=0.5)  # Make the alien ship's bullet thinner
 bullet.hideturtle()
 bullet_state = "ready"
 
@@ -146,28 +192,31 @@ def move_invaders():
             player.hideturtle()
             invader.hideturtle()
             print("GAME OVER!!!")
+            play_game_over_sound()  # Play the game over sound
             win.bye()
 
         if y < -290:
             player.hideturtle()
             invader.hideturtle()
             print("GAME OVER!!!")
+            play_game_over_sound()  # Play the game over sound
             win.bye()
     
-    muovi_aliena(aliena)
+    move_alien(alien)
 
     for powerup in powerups:
-        muovi_powerup(powerup)
+        move_powerup(powerup)
 
     win.update()
     win.ontimer(move_invaders, 100)
 
 move_invaders()
+play_battle_music()  # Start the battle music
 
 start_time = time.time()
 while True:
     if random.randint(1, 10000) == 1:
-        powerup = genera_powerup()
+        powerup = generate_powerup()
         powerups.append(powerup)
 
     for powerup in powerups:
@@ -186,30 +235,28 @@ while True:
             if bullet.distance(invader) < 15:
                 bullet.hideturtle()
                 bullet_state = "ready"
-                #x = random.randint(-290, 290)
-                #y = random.randint(100, 250)
                 invader.hideturtle()
-                punteggio += 10
-                aggiorna_punteggio()
+                score += 10
+                update_score()
 
         if y > 290:
             bullet.hideturtle()
             bullet_state = "ready"
 
     if time.time() - start_time > 1000000:
-        if aliena.isvisible():
-            muovi_aliena(aliena)
+        if alien.isvisible():
+            move_alien(alien)
 
-    # Verifica se il proiettile del giocatore colpisce la navicella aliena
-    if bullet_state == "fire" and bullet.distance(aliena) < 15:
+    # Check if player's bullet hits the alien ship
+    if bullet_state == "fire" and bullet.distance(alien) < 15:
         bullet.hideturtle()
         bullet_state = "ready"
-        vita_aliena -= 10
-        aggiorna_barra_vita(barra_vita, vita_aliena)
+        alien_health -= 10
+        update_health_bar(health_bar, alien_health)
 
-        if vita_aliena <= 0:
-            aliena.hideturtle()
-            print("HAI VINTO!!!")
+        if alien_health <= 0:
+            alien.hideturtle()
+            print("YOU WIN!!!")
             win.bye()
-
-    win.update()
+            stop_battle_music()  # Stop the battle music
+            play_win_music()  # Play the win music
